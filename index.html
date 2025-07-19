@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>💖 Harshad & Kajal's Love Quiz 💖</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #ffdde1, #ee9ca7);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .quiz-container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 700px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      animation: fadeIn 0.5s ease;
+      position: relative;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
+    h2 {
+      color: #e91e63;
+    }
+    .options {
+      margin-top: 20px;
+    }
+    .option {
+      background-color: #fce4ec;
+      border: 2px solid #f06292;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .option:hover {
+      background-color: #f8bbd0;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .buttons button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #e91e63;
+      color: white;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .buttons button:hover {
+      background-color: #c2185b;
+    }
+    #result {
+      text-align: center;
+      display: none;
+    }
+    #result h2 {
+      color: #d81b60;
+    }
+    .review-question {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .correct { color: green; }
+    .wrong { color: red; }
+    .emoji { font-size: 20px; margin-left: 8px; }
+    #error {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      display: none;
+    }
+    .heart {
+      font-size: 60px;
+      animation: beat 1s infinite;
+    }
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    .share-buttons {
+      margin-top: 20px;
+    }
+    .share-buttons a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: white;
+      background: #25D366;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .share-buttons a.insta {
+      background: linear-gradient(to right, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    }
+    .restart-btn {
+      margin-top: 20px;
+      background-color: #ff4081;
+    }
+    canvas#confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .ai-img {
+      margin-top: 20px;
+      width: 150px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+    
+      <div class="container">
+    <!-- Welcome Screen -->
+    <div id="welcome">
+      <h2>💌 Dear Love,<br><br>This quiz is made with love just for you! ❤️<br><br>Let's see how well you know yourself! Dear😘</h2>
+      
+    </div>
+
+
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="quiz-container">
+  <div id="quiz">
+    <h2 id="question">Loading question...</h2>
+    <div class="options" id="options"></div>
+    <p id="error">Please select an option! ❗</p>
+    <div class="buttons">
+      <button id="back" onclick="prevQuestion()">Back</button>
+      <button id="next" onclick="nextQuestion()">Next</button>
+    </div>
+  </div>
+
+  <div id="result">
+    <h2>💖 Love Quiz Result 💖</h2>
+    <p id="score"></p>
+    <div id="review"></div>
+    
+    <div class="heart">💗</div>
+    
+    <button class="restart-btn" onclick="restartQuiz()">🔁 Restart Quiz</button>
+  </div>
+</div>
+
+<script>
+  const quizData = [
+    { question: "What is Harshad's favorite cricketer?", options: ["Virat Kohli", "Rohit Sharma", "MS Dhoni", "Sachin Tendulkar"], answer: "Rohit Sharma" },
+    { question: "Favorite season of Harshad?", options: ["Summer", "Winter", "Rainy", "Spring"], answer: "Winter" },
+    { question: "Harshad’s favorite flower?", options: ["Rose", "Lily", "Sunflower", "Jasmine"], answer: "Rose" },
+    { question: "Harshad’s favorite movie?", options: ["KGF", "Hera Pheri", "Ramaiya Vastavaiya", "All of the above"], answer: "All of the above" },
+    { question: "Harshad loves playing which game with Kajal?", options: ["Chess", "Ludo", "BGMI", "Carrom"], answer: "BGMI" },
+    { question: "His dream includes?", options: ["Money", "Marriage with Kajal", "Travel world", "Own business"], answer: "Marriage with Kajal" },
+    { question: "Favorite place to go with Kajal?", options: ["Beach", "Mall", "Fort during rain", "Temple"], answer: "Fort during rain" },
+    { question: "Harshad’s favorite drink?", options: ["Soda", "Tea", "Coffee", "Lemon juice"], answer: "Lemon juice" },
+    { question: "Who is Harshad's soulmate? 💞", options: ["Priya", "Kajal", "Sneha", "Pooja"], answer: "Kajal" },
+    { question: "Harshad's blood group?", options: ["O+", "A+", "B+", "AB-"], answer: "B+" }
+  ];
+
+  let current = 0;
+  const userAnswers = [];
+
+  const quizEl = document.getElementById('quiz');
+  const questionEl = document.getElementById('question');
+  const optionsEl = document.getElementById('options');
+  const resultEl = document.getElementById('result');
+  const scoreEl = document.getElementById('score');
+  const errorEl = document.getElementById('error');
+  const backBtn = document.getElementById('back');
+  const nextBtn = document.getElementById('next');
+
+  function loadQuestion() {
+    const q = quizData[current];
+    questionEl.innerText = `Q${current + 1}. ${q.question}`;
+    optionsEl.innerHTML = '';
+    q.options.forEach(opt => {
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.innerText = opt;
+      div.onclick = () => selectOption(opt);
+      if (userAnswers[current] === opt) div.style.backgroundColor = '#f8bbd0';
+      optionsEl.appendChild(div);
+    });
+    backBtn.style.display = current === 0 ? 'none' : 'inline-block';
+    nextBtn.innerText = current === quizData.length - 1 ? "Submit" : "Next";
+    errorEl.style.display = 'none';
+  }
+
+  function selectOption(selected) {
+    userAnswers[current] = selected;
+    loadQuestion();
+  }
+
+  function nextQuestion() {
+    if (!userAnswers[current]) {
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (current === quizData.length - 1) {
+      submitQuiz();
+    } else {
+      current++;
+      loadQuestion();
+    }
+  }
+
+  function prevQuestion() {
+    if (current > 0) {
+      current--;
+      loadQuestion();
+    }
+  }
+
+  function submitQuiz() {
+    if (!userAnswers[current]) {
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    quizEl.style.display = 'none';
+    resultEl.style.display = 'block';
+
+    let score = 0;
+    const review = document.getElementById('review');
+    review.innerHTML = '';
+
+    quizData.forEach((q, i) => {
+      const correct = q.answer === userAnswers[i];
+      if (correct) score++;
+      const div = document.createElement('div');
+      div.className = 'review-question';
+      div.innerHTML = `
+        <strong>Q${i + 1}. ${q.question}</strong><br>
+        Your answer: <span class="${correct ? 'correct' : 'wrong'}">${userAnswers[i] || "None"} ${correct ? '✅' : '❌'}</span><br>
+        Correct answer: <span class="correct">${q.answer}</span>
+        <hr>
+      `;
+      review.appendChild(div);
+    });
+
+    scoreEl.innerHTML = `You scored <strong>${score}/${quizData.length}</strong> 💕`;
+    showConfetti();
+
+    
+  }
+
+  function restartQuiz() {
+    current = 0;
+    userAnswers.length = 0;
+    resultEl.style.display = 'none';
+    quizEl.style.display = 'block';
+    loadQuestion();
+  }
+
+  function showConfetti() {
+    const confetti = document.getElementById('confettiCanvas');
+    const ctx = confetti.getContext('2d');
+    confetti.width = window.innerWidth;
+    confetti.height = window.innerHeight;
+
+    const pieces = Array.from({ length: 100 }, () => ({
+      x: Math.random() * confetti.width,
+      y: Math.random() * confetti.height - confetti.height,
+      size: Math.random() * 5 + 2,
+      speed: Math.random() * 3 + 1,
+      color: `hsl(${Math.random() * 360}, 100%, 70%)`
+    }));
+
+    function draw() {
+      ctx.clearRect(0, 0, confetti.width, confetti.height);
+      pieces.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+    }
+
+    function update() {
+      pieces.forEach(p => {
+        p.y += p.speed;
+        if (p.y > confetti.height) {
+          p.y = -10;
+          p.x = Math.random() * confetti.width;
+        }
+      });
+    }
+
+    function loop() {
+      draw();
+      update();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+    setTimeout(() => { confetti.getContext('2d').clearRect(0, 0, confetti.width, confetti.height); }, 8000);
+  }
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
